@@ -1,44 +1,175 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useDispatch } from 'react-redux';
+import { setCredentials } from '../slices/userSlice';
+import toast from 'react-hot-toast';
 
 const Login = () => {
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [timer, setTimer] = useState(0);
+
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleSendOtp = async (e) => {
+    e?.preventDefault();
+    
+    if (!email.includes('@')) {
+      return toast.error('Please enter a valid email address');
+    }
+
+    try {
+      setLoading(true);
+      const { data } = await axios.post('http://localhost:5000/api/auth/send-otp', { email });
+      setStep(2);
+      setTimer(30);
+      
+      const interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      toast.success(data.message || 'OTP dispatched!', {
+        iconTheme: { primary: '#713200', secondary: '#FFFAEE' },
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Verification relay failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (!otp || otp.length < 6) return toast.error('Provide the 6-digit access code');
+
+    try {
+      setLoading(true);
+      const { data } = await axios.post('http://localhost:5000/api/auth/verify-otp', { email, otp });
+      
+      if (data.success) {
+        dispatch(setCredentials({ ...data.user, token: data.token }));
+        toast.success('Successfully Authenticated');
+        navigate('/');
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Invalid or expired entry');
+      if (error.response?.status === 429) setStep(1); // Reset if attempts maxed
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center py-10">
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center py-10">
       <Link to="/" className="mb-6">
         <h1 className="text-4xl font-bold font-serif tracking-tighter">amazon</h1>
       </Link>
       
-      <div className="w-full max-w-sm border border-gray-300 rounded p-6 shadow-sm">
-        <h2 className="text-3xl font-medium mb-4">Sign in</h2>
-        <form className="flex flex-col gap-4">
-          <div>
-            <label className="font-medium text-sm block mb-1">Email or mobile phone number</label>
-            <input type="email" className="w-full border border-gray-400 rounded p-2 focus:ring-2 focus:ring-yellow-500 focus:border-transparent outline-none" required />
-          </div>
-          <button type="submit" className="w-full bg-[#f0c14b] border border-gray-400 py-2 rounded shadow-sm hover:bg-[#e4b33a] font-medium active:bg-[#d6a52c]">
-            Continue
-          </button>
-        </form>
-        
-        <div className="text-xs text-black mt-4 font-normal">
-          By continuing, you agree to Amazon's <a href="#" className="text-blue-600 hover:underline hover:text-orange-600">Conditions of Use</a> and <a href="#" className="text-blue-600 hover:underline hover:text-orange-600">Privacy Notice</a>.
-        </div>
+      <div className="w-full max-w-sm bg-white border border-gray-300 rounded-xl p-6 shadow-sm">
+        {step === 1 ? (
+          <>
+            <h2 className="text-3xl font-medium mb-6">Sign in</h2>
+            
+            <form onSubmit={handleSendOtp} className="flex flex-col gap-4">
+              <div>
+                <label className="font-medium text-sm block mb-1">
+                  Email address
+                </label>
+                <input 
+                  type="email" 
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border border-gray-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500 outline-none transition-all" 
+                  placeholder="user@example.com"
+                  required 
+                  disabled={loading}
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 bg-[#f0c14b] border border-[#a88734] py-2 rounded-lg shadow-sm hover:bg-[#e4b33a] font-medium active:bg-[#d6a52c] disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+              >
+                {loading && (
+                  <svg className="animate-spin h-5 w-5 text-gray-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                )}
+                {loading ? 'Sending...' : 'Continue with OTP'}
+              </button>
+            </form>
+            
+            <div className="text-xs text-black mt-4 font-normal">
+              By continuing, you agree to Amazon's <a href="#" className="text-blue-600 hover:underline hover:text-orange-600">Conditions of Use</a> and <a href="#" className="text-blue-600 hover:underline hover:text-orange-600">Privacy Notice</a>.
+            </div>
+          </>
+        ) : (
+          <>
+             <h2 className="text-3xl font-medium mb-2">Verify OTP</h2>
+             <p className="text-sm text-gray-600 mb-4">
+               Access code dispatched to <span className="font-bold text-gray-800">{email}</span>. 
+               <button onClick={() => setStep(1)} className="text-blue-600 ml-1 hover:underline">Change</button>
+             </p>
+             <form onSubmit={handleVerifyOtp} className="flex flex-col gap-4">
+               <div>
+                 <label className="font-medium text-sm block mb-1">Enter 6-digit Code</label>
+                 <input 
+                   type="text" 
+                   maxLength="6"
+                   value={otp}
+                   onChange={(e) => setOtp(e.target.value)}
+                   className="w-full border border-gray-400 rounded-lg p-2 focus:ring-2 focus:ring-yellow-500 outline-none text-center tracking-widest text-lg font-bold transition-all" 
+                   placeholder="------"
+                   required 
+                   disabled={loading}
+                 />
+               </div>
+               <button 
+                 type="submit" 
+                 disabled={loading}
+                 className="w-full flex items-center justify-center gap-2 bg-[#f0c14b] border border-[#a88734] py-2 rounded-lg shadow-sm hover:bg-[#e4b33a] font-medium active:bg-[#d6a52c] disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+               >
+                 {loading && (
+                   <svg className="animate-spin h-5 w-5 text-gray-800" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                   </svg>
+                 )}
+                 {loading ? 'Verifying...' : 'Sign in'}
+               </button>
+             </form>
 
-        <div className="mt-6">
-          <button className="w-full py-2 border border-gray-300 rounded shadow-sm hover:bg-gray-50 flex items-center justify-center gap-2 font-medium">
-            <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/><path d="M1 1h22v22H1z" fill="none"/></svg>
-            Sign in with Google
-          </button>
-        </div>
+             <div className="mt-4 text-center">
+               <button 
+                 onClick={handleSendOtp} 
+                 disabled={timer > 0 || loading}
+                 className={`text-sm font-medium transition-colors ${timer > 0 ? 'text-gray-400 cursor-not-allowed' : 'text-blue-600 hover:text-orange-600 hover:underline'}`}
+               >
+                 {timer > 0 ? `Resend Code in ${timer}s` : 'Resend Code'}
+               </button>
+             </div>
+          </>
+        )}
       </div>
-      
-      <div className="flex items-center gap-4 w-full max-w-sm mt-6 mb-4">
+
+      <div className="flex items-center gap-4 w-full max-w-sm mt-8 mb-4">
         <div className="h-px bg-gray-300 flex-1"></div>
         <span className="text-xs text-gray-500 font-medium">New to Amazon?</span>
         <div className="h-px bg-gray-300 flex-1"></div>
       </div>
       
-      <button className="w-full max-w-sm border border-gray-400 py-2 rounded shadow-sm bg-gray-100 hover:bg-gray-200 text-sm">
+      <button className="w-full max-w-sm border border-gray-400 py-2 rounded-lg shadow-sm bg-gray-100 hover:bg-gray-200 text-sm font-medium transition-colors">
         Create your Amazon account
       </button>
     </div>

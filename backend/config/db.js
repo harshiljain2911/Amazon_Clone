@@ -2,11 +2,11 @@ import mongoose from 'mongoose';
 
 const connectDB = async () => {
   try {
-    const conn = await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/amazon_clone');
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB Connected successfully to: ${conn.connection.host}`);
   } catch (error) {
-    console.error(`Error: ${error.message}`);
-    console.error('Fallback to dummy data mode: MongoDB could not be connected.');
+    console.error(`MongoDB Connection Failed: ${error.message}`);
+    process.exit(1); // Exit process with failure
   }
 };
 

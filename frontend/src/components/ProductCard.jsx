@@ -1,37 +1,161 @@
 import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { addToCartDB } from '../slices/cartSlice';
+import { toggleWishlistDB } from '../slices/wishlistSlice';
+import { openQuickView } from '../slices/uiSlice';
+import { useNavigate } from 'react-router-dom';
+import { Heart, Star } from 'lucide-react';
+import toast from 'react-hot-toast';
+
+/* Helper — render star rating */
+const StarRating = ({ rating = 0, count = 0 }) => {
+  const full  = Math.floor(rating);
+  const half  = rating % 1 >= 0.5 ? 1 : 0;
+  const empty = 5 - full - half;
+
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex items-center gap-0.5">
+        {Array(full).fill(null).map((_, i) => (
+          <Star key={`f${i}`} size={13} className="text-[#e47911]" fill="#e47911" />
+        ))}
+        {half === 1 && (
+          <div className="relative w-[13px] h-[13px]">
+            <Star size={13} className="text-[#dddddd] absolute inset-0" fill="#dddddd" />
+            <div className="absolute inset-0 overflow-hidden w-[50%]">
+              <Star size={13} className="text-[#e47911]" fill="#e47911" />
+            </div>
+          </div>
+        )}
+        {Array(empty).fill(null).map((_, i) => (
+          <Star key={`e${i}`} size={13} className="text-[#dddddd]" fill="#dddddd" />
+        ))}
+      </div>
+      {count > 0 && (
+        <span className="text-xs text-[#007185] hover:text-[#c7511f] cursor-pointer hover:underline">
+          {count.toLocaleString('en-IN')}
+        </span>
+      )}
+    </div>
+  );
+};
+
+/* Format INR price */
+const formatINR = (price = 0) => {
+  const [int, dec] = price.toFixed(2).split('.');
+  return { int: parseInt(int).toLocaleString('en-IN'), dec };
+};
 
 const ProductCard = ({ product }) => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { userInfo }    = useSelector((s) => s.user);
+  const { wishlistItems } = useSelector((s) => s.wishlist);
+
+  const isWishlisted = wishlistItems?.some((item) => item._id === product._id);
+  const { int, dec } = formatINR(product.price ?? 0);
+
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    if (!userInfo) {
+      toast.error('Sign in to add items to your cart');
+      return navigate('/login');
+    }
+    dispatch(addToCartDB({ item: product, qty: 1 }));
+    toast.success(`"${product.name.split(' ').slice(0, 3).join(' ')}" added to cart`, {
+      style: { fontSize: '13px' },
+    });
+  };
+
+  const handleWishlist = (e) => {
+    e.stopPropagation();
+    if (!userInfo) {
+      toast.error('Sign in to manage your wishlist');
+      return navigate('/login');
+    }
+    dispatch(toggleWishlistDB(product));
+    toast(isWishlisted ? 'Removed from Wish List' : 'Added to Wish List', {
+      icon: isWishlisted ? '💔' : '❤️',
+      style: { fontSize: '13px' },
+    });
+  };
+
+  const handleQuickView = (e) => {
+    e.stopPropagation();
+    dispatch(openQuickView(product));
+  };
+
   return (
-    <div className="bg-white p-6 shadow-md rounded-lg z-30 flex flex-col h-full hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-      <div className="flex justify-center h-52 mb-6 overflow-hidden">
-        <img src={product.image} alt={product.name} className="max-w-full h-full object-contain cursor-pointer transition-transform duration-500 hover:scale-[1.1]" />
+    <div
+      className="bg-white border border-[#dddddd] flex flex-col h-full relative group
+                 transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.12)]
+                 hover:-translate-y-0.5 cursor-pointer rounded-sm"
+      onClick={handleQuickView}
+    >
+      {/* Wishlist heart */}
+      <button
+        onClick={handleWishlist}
+        className="absolute top-2 right-2 z-10 p-1.5 bg-white/90 rounded-full
+                   shadow-sm hover:scale-110 active:scale-95 transition-transform"
+        aria-label="Add to Wishlist"
+      >
+        <Heart
+          size={16}
+          className={isWishlisted ? 'fill-[#c7511f] text-[#c7511f]' : 'text-[#565959]'}
+        />
+      </button>
+
+      {/* Product image */}
+      <div className="flex items-center justify-center h-44 p-4 bg-white">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="max-h-full max-w-full object-contain mix-blend-multiply
+                     group-hover:scale-105 transition-transform duration-300"
+        />
       </div>
 
-      <div className="flex flex-col flex-1 pb-2">
-        <h3 className="text-xl font-bold hover:text-orange-500 cursor-pointer line-clamp-2 leading-tight text-gray-900 mb-2">{product.name}</h3>
-        
-        <div className="flex items-center space-x-1 mb-2">
-          <div className="flex">
-            {Array(5).fill().map((_, i) => (
-              <svg key={i} className={`w-5 h-5 ${i < product.rating ? 'text-yellow-400' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
-                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-              </svg>
-            ))}
-          </div>
-          <span className="text-blue-500 hover:text-orange-600 hover:underline cursor-pointer text-sm font-medium ml-1">{product.numReviews}</span>
+      {/* Info */}
+      <div className="flex flex-col flex-1 px-3 pb-3 pt-1 gap-1">
+
+        {/* Title */}
+        <h3 className="text-sm text-[#0f1111] line-clamp-2 leading-snug
+                       hover:text-[#c7511f] transition-colors">
+          {product.name}
+        </h3>
+
+        {/* Stars */}
+        <StarRating rating={product.rating ?? 4} count={product.numReviews ?? 0} />
+
+        {/* Price */}
+        <div className="flex items-start mt-1">
+          <span className="text-xs text-[#0f1111] mt-0.5 mr-0.5">₹</span>
+          <span className="text-lg font-bold text-[#0f1111] leading-none">{int}</span>
+          <span className="text-xs text-[#0f1111] mt-0.5">.{dec}</span>
         </div>
 
-        <div className="text-3xl font-black mb-5 flex items-start text-gray-900">
-           <span className="text-base font-medium mt-1 mr-0.5">$</span>
-           <span>{Math.floor(product.price)}</span>
-           <span className="text-base font-medium mt-1">{((product.price % 1)*100).toFixed(0).padStart(2, '0')}</span>
-        </div>
-        
-        <div className="mt-auto">
-          <button className="bg-yellow-400 hover:bg-yellow-500 text-black w-full py-3 h-12 rounded-full font-bold shadow-sm active:scale-95 transition-all text-sm border border-yellow-500">
-            Add to Cart
-          </button>
-        </div>
+        {/* Shipping note */}
+        <p className="text-xs text-[#007185]">FREE Delivery by Amazon</p>
+
+        {/* In stock */}
+        {product.countInStock > 0 ? (
+          <p className="text-xs text-[#067d62] font-medium">In stock</p>
+        ) : (
+          <p className="text-xs text-[#c7511f] font-medium">Out of stock</p>
+        )}
+
+        {/* Add to Cart */}
+        <button
+          onClick={handleAddToCart}
+          disabled={product.countInStock === 0}
+          className="mt-auto w-full py-1.5 rounded-lg text-xs font-medium text-[#0f1111]
+                     bg-[#ffd814] hover:bg-[#f7ca00] border border-[#FCD200]
+                     active:bg-[#ddb100] transition-colors duration-150
+                     disabled:opacity-50 disabled:cursor-not-allowed
+                     flex items-center justify-center"
+        >
+          Add to Cart
+        </button>
       </div>
     </div>
   );

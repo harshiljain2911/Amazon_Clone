@@ -1,14 +1,16 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trash2, Plus, Minus } from 'lucide-react';
+import { X, Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { toggleCartDrawer } from '../slices/uiSlice';
-import { selectCartTotals, removeFromCart, updateQuantity } from '../slices/cartSlice';
+import { selectCartTotals, addToCartDB } from '../slices/cartSlice';
 
 const CartDrawer = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const isOpen = useSelector((state) => state.ui.isCartDrawerOpen);
+  const { userInfo } = useSelector((state) => state.user);
   const { cartItems } = useSelector((state) => state.cart);
   const { itemsCount, totalPrice } = useSelector(selectCartTotals);
 
@@ -26,16 +28,22 @@ const CartDrawer = () => {
   };
 
   const handleUpdateQuantity = (id, currentQty, amount) => {
+    const item = cartItems.find(x => x._id === id);
+    if (!item) return;
+
     const newQty = currentQty + amount;
     if (newQty < 1) {
-      dispatch(removeFromCart(id));
+      dispatch(addToCartDB({ item, qty: 0 }));
       return;
     }
-    dispatch(updateQuantity({ id, qty: newQty }));
+    dispatch(addToCartDB({ item, qty: newQty }));
   };
 
   const handleRemoveItem = (id) => {
-    dispatch(removeFromCart(id));
+    const item = cartItems.find(x => x._id === id);
+    if (item) {
+      dispatch(addToCartDB({ item, qty: 0 }));
+    }
   };
 
   return (
@@ -79,18 +87,36 @@ const CartDrawer = () => {
             {/* Cart Items */}
             <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
               {cartItems.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-gray-500">
-                  <div className="mb-4 text-gray-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+                <div className="flex flex-col items-center justify-center h-full text-center px-4">
+                  <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4 text-gray-400">
+                    <ShoppingBag size={40} strokeWidth={1.5} />
                   </div>
-                  <p className="text-lg font-medium">Your Amazon Cart is empty</p>
-                  <Link 
-                    to="/" 
-                    onClick={handleClose}
-                    className="mt-4 text-blue-600 hover:text-orange-500 hover:underline"
-                  >
-                    Shop today's deals
-                  </Link>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">Your Amazon Cart is empty</h3>
+                  <p className="text-gray-500 mb-6 text-sm">Looks like you haven't added anything yet.</p>
+                  
+                  <div className="flex flex-col w-full gap-3">
+                    <button 
+                      onClick={() => {
+                        handleClose();
+                        navigate("/");
+                      }}
+                      className="w-full bg-[#f0c14b] hover:bg-yellow-500 text-black font-semibold py-2.5 px-4 rounded transition-colors shadow-sm border-none cursor-pointer text-sm"
+                    >
+                      Continue Shopping
+                    </button>
+                    
+                    {!userInfo && (
+                      <button 
+                        onClick={() => {
+                          handleClose();
+                          navigate("/login");
+                        }}
+                        className="w-full bg-white text-blue-600 border border-gray-200 px-4 py-2.5 rounded font-semibold hover:bg-gray-50 transition-colors shadow-sm text-sm"
+                      >
+                        Login to see saved items
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 cartItems.map((item) => (

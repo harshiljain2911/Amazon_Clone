@@ -3,16 +3,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Heart, ShoppingCart } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { closeQuickView } from '../slices/uiSlice';
-import { addToCart } from '../slices/cartSlice';
-import { toggleWishlist } from '../slices/wishlistSlice';
+import { addToCartDB } from '../slices/cartSlice';
+import { toggleWishlistDB } from '../slices/wishlistSlice';
+import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const QuickViewModal = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { userInfo } = useSelector((state) => state.user);
   const { isQuickViewOpen, quickViewProduct: product } = useSelector((state) => state.ui);
   const { wishlistItems } = useSelector((state) => state.wishlist);
 
-  const isWishlisted = product ? wishlistItems.some((item) => item._id === product._id) : false;
+  const isWishlisted = product ? wishlistItems?.some((item) => item._id === product._id) : false;
 
   const handleClose = () => {
     dispatch(closeQuickView());
@@ -20,16 +23,28 @@ const QuickViewModal = () => {
 
   const handleAddToCart = () => {
     if (product) {
-      dispatch(addToCart(product));
-      toast.success(`${product.name.split(' ').slice(0,3).join(' ')} added to cart!`);
+      if (!userInfo) {
+        toast.error('Sign in to add items to your cart');
+        handleClose();
+        return navigate('/login');
+      }
+      
+      dispatch(addToCartDB({ item: product, qty: 1 }));
+      toast.success(`${product.name.split(' ').slice(0,3).join(' ')} added to remote cart!`);
       handleClose();
     }
   };
 
   const handleWishlist = () => {
     if (product) {
-      dispatch(toggleWishlist(product));
-      toast(isWishlisted ? 'Removed from Wishlist' : 'Added to Wishlist', { icon: isWishlisted ? '💔' : '❤️' });
+       if (!userInfo) {
+        toast.error('Sign in to manage your wishlist');
+        handleClose();
+        return navigate('/login');
+      }
+
+      dispatch(toggleWishlistDB(product));
+      toast(isWishlisted ? 'Removed from remote Wishlist' : 'Added to remote Wishlist', { icon: isWishlisted ? '💔' : '❤️' });
     }
   };
 
@@ -41,10 +56,10 @@ const QuickViewModal = () => {
         <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6">
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.6 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={handleClose}
-            className="absolute inset-0 bg-black backdrop-blur-sm cursor-pointer"
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-2xl cursor-pointer"
           />
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -121,14 +136,14 @@ const QuickViewModal = () => {
               <div className="mt-8 space-y-3">
                 <button 
                   onClick={handleAddToCart}
-                  className="w-full bg-yellow-400 hover:bg-yellow-500 active:bg-yellow-600 text-black py-4 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(250,204,21,0.39)] hover:shadow-[0_6px_20px_rgba(250,204,21,0.23)] hover:-translate-y-0.5 transition-all text-lg flex items-center justify-center gap-2"
+                  className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 active:scale-95 text-black py-4 rounded-xl font-bold shadow-[0_4px_14px_0_rgba(250,204,21,0.39)] hover:shadow-[0_8px_25px_rgba(250,204,21,0.25)] hover:-translate-y-0.5 transition-all duration-300 text-lg flex items-center justify-center gap-2 border border-yellow-500/50"
                 >
                   <ShoppingCart size={20} />
                   Add to Cart
                 </button>
                 <button 
                   onClick={handleClose}
-                  className="w-full bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 py-3.5 rounded-xl font-bold transition-all text-base"
+                  className="w-full bg-white border-2 border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-50 py-3.5 rounded-xl font-bold transition-all text-base hover:shadow-sm"
                 >
                   View Full Details
                 </button>
