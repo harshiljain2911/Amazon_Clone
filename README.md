@@ -37,3 +37,26 @@ A full-stack Amazon clone built using the MERN stack (MongoDB, Express, React, N
 ---
 
 ## 📂 Project Structure
+amazon_clone/
+│
+├── backend/
+│ ├── controllers/
+│ ├── models/
+│ ├── routes/
+│ ├── config/
+│ ├── server.js
+│
+├── frontend/
+│ ├── src/
+│ │ ├── components/
+│ │ ├── pages/
+│ │ ├── redux/
+│ │ ├── App.jsx
+│ │ ├── main.jsx
+│ │
+│ ├── index.html
+│
+├── .gitignore
+├── README.md
+├── package.json
+
