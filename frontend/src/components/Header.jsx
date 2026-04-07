@@ -7,6 +7,7 @@ import { selectCartTotals, clearCart } from '../slices/cartSlice';
 import { clearWishlist } from '../slices/wishlistSlice';
 import { toggleCartDrawer, setSearchQuery } from '../slices/uiSlice';
 import { logout } from '../slices/userSlice';
+import { formatPrice } from '../utils/formatters';
 
 const CATEGORIES = [
   'All', 'Electronics', 'Mobiles', 'Computers', 'Books',
@@ -177,7 +178,7 @@ const Header = () => {
                   >
                     <Search size={13} className="text-[#565959] flex-shrink-0" />
                     <span className="text-sm text-[#0f1111] line-clamp-1">{p.name}</span>
-                    <span className="ml-auto text-xs text-[#565959]">₹{p.price?.toLocaleString('en-IN')}</span>
+                    <span className="ml-auto text-xs text-[#565959]">{formatPrice(p.price)}</span>
                   </button>
                 ))}
               </div>

@@ -120,4 +120,16 @@ const startServer = () => {
   });
 };
 
+/* ══════════════════════════════════════════════════════════
+   PROCESS-LEVEL ERROR SAFETY NET
+══════════════════════════════════════════════════════════ */
+process.on('uncaughtException', (err) => {
+  console.error('🔥 Uncaught Exception:', err.message);
+  console.error(err.stack);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('🔥 Unhandled Rejection:', reason);
+});
+
 startServer();

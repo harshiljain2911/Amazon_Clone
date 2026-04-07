@@ -3,7 +3,7 @@ import axios from 'axios';
 // Ensure this file uses the store's token, or we can just pass token as an argument.
 // Let's create utility functions to handle the Razorpay flow
 const apiBase = axios.create({
-  baseURL: '/api'
+  baseURL: 'http://localhost:5000/api'
 });
 
 const getAuthHeaders = () => {

@@ -1,6 +1,16 @@
 import nodemailer from 'nodemailer';
 
+/**
+ * Send an email via Gmail SMTP.
+ * Returns `true` on success, `false` on failure — never throws.
+ */
 const sendEmail = async ({ to, subject, text }) => {
+  // Bail out early if credentials aren't configured
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn('[Email Service] EMAIL_USER or EMAIL_PASS not set — skipping email delivery.');
+    return false;
+  }
+
   try {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -21,7 +31,8 @@ const sendEmail = async ({ to, subject, text }) => {
     console.log(`[Email Service] Success. Response: ${info.response}`);
     return true;
   } catch (error) {
-    console.error(`[Email Service] Failure! Stack Trace:`, error);
+    console.error('[Email Service] Failure! Error:', error.message);
+    // Return false instead of re-throwing — caller decides how to handle
     return false;
   }
 };

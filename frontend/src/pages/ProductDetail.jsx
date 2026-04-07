@@ -6,6 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addToCartDB } from '../slices/cartSlice';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { formatPrice } from '../utils/formatters';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -121,7 +122,7 @@ const ProductDetail = () => {
              <span className="text-blue-500 hover:underline cursor-pointer">{product.numReviews} ratings</span>
           </div>
 
-          <div className="text-gray-500 mb-2">Price: <span className="text-3xl font-medium text-black">${product.price}</span></div>
+          <div className="text-gray-500 mb-2">Price: <span className="text-3xl font-medium text-black">{formatPrice(product.price)}</span></div>
           
           <div className="mt-4 border-t pt-4">
              <h3 className="font-bold mb-2">About this item:</h3>
@@ -132,7 +133,7 @@ const ProductDetail = () => {
         {/* Action Section */}
         <div className="md:w-1/4 pt-4 md:pl-6">
            <div className="border rounded-lg p-5 flex flex-col h-full bg-gray-50">
-             <span className="text-2xl font-semibold mb-4 block">${product.price}</span>
+             <span className="text-2xl font-semibold mb-4 block">{formatPrice(product.price)}</span>
              
              <div className="text-green-600 font-bold text-lg mb-4">
                {product.countInStock > 0 ? 'In Stock' : 'Out of Stock'}

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import techHero from '../assets/hero.png';
 
 /* ─── Slide data ─────────────────────────────────────────────────────────────
    High-res lifestyle / product banner images from Unsplash
@@ -19,8 +20,7 @@ const SLIDES = [
   },
   {
     id: 1,
-    image:
-      'https://images.unsplash.com/photo-1593642702821-c8b13eb2a5?q=95&w=2400&auto=format&fit=crop',
+    image:  techHero,
     label: 'Electronics',
     title: 'Next-Generation Tech',
     sub:   'Explore laptops, earbuds, cameras & more',

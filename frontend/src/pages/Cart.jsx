@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Trash2, Plus, Minus, ShoppingBag } from 'lucide-react';
 import { selectCartTotals, addToCartDB } from '../slices/cartSlice';
+import { formatPrice } from '../utils/formatters';
 
 const Cart = () => {
   const dispatch = useDispatch();
@@ -99,7 +100,7 @@ const Cart = () => {
                         <Link to={`/product/${item._id}`} className="text-lg font-medium text-gray-900 leading-snug hover:text-orange-600 line-clamp-2 md:line-clamp-none">
                           {item.name}
                         </Link>
-                        <span className="font-bold text-xl block sm:hidden">${item.price.toFixed(2)}</span>
+                        <span className="font-bold text-xl block sm:hidden">{formatPrice(item.price)}</span>
                      </div>
                      
                      <div className="mt-2 text-sm text-green-600 font-medium">In Stock</div>
@@ -149,14 +150,14 @@ const Cart = () => {
                   </div>
                   
                   <div className="hidden sm:block text-right">
-                     <span className="font-bold text-xl">${item.price.toFixed(2)}</span>
+                     <span className="font-bold text-xl">{formatPrice(item.price)}</span>
                   </div>
                 </motion.div>
               ))}
             </div>
 
             <div className="mt-6 pt-6 border-t font-semibold text-right text-lg">
-              Subtotal ({itemsCount} items): <span className="font-bold text-2xl">${totalPrice}</span>
+              Subtotal ({itemsCount} items): <span className="font-bold text-2xl">{formatPrice(totalPrice)}</span>
             </div>
           </div>
         </div>
@@ -174,7 +175,7 @@ const Cart = () => {
              
              <h2 className="text-xl leading-tight mb-5">
                Subtotal ({itemsCount} items): <br/>
-               <span className="font-bold text-2xl mt-1 block">${totalPrice}</span>
+               <span className="font-bold text-2xl mt-1 block">{formatPrice(totalPrice)}</span>
              </h2>
 
              <div className="flex items-center gap-2 mb-6">

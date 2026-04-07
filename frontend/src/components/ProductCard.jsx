@@ -6,6 +6,7 @@ import { openQuickView } from '../slices/uiSlice';
 import { useNavigate } from 'react-router-dom';
 import { Heart, Star } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { splitPrice } from '../utils/formatters';
 
 /* Helper — render star rating */
 const StarRating = ({ rating = 0, count = 0 }) => {
@@ -40,11 +41,7 @@ const StarRating = ({ rating = 0, count = 0 }) => {
   );
 };
 
-/* Format INR price */
-const formatINR = (price = 0) => {
-  const [int, dec] = price.toFixed(2).split('.');
-  return { int: parseInt(int).toLocaleString('en-IN'), dec };
-};
+
 
 const ProductCard = ({ product }) => {
   const dispatch = useDispatch();
@@ -53,7 +50,7 @@ const ProductCard = ({ product }) => {
   const { wishlistItems } = useSelector((s) => s.wishlist);
 
   const isWishlisted = wishlistItems?.some((item) => item._id === product._id);
-  const { int, dec } = formatINR(product.price ?? 0);
+  const { int, dec } = splitPrice(product.price ?? 0);
 
   const handleAddToCart = (e) => {
     e.stopPropagation();

@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { toggleCartDrawer } from '../slices/uiSlice';
 import { selectCartTotals, addToCartDB } from '../slices/cartSlice';
+import { formatPrice } from '../utils/formatters';
 
 const CartDrawer = () => {
   const dispatch = useDispatch();
@@ -142,7 +143,7 @@ const CartDrawer = () => {
                         >
                           {item.name}
                         </Link>
-                        <div className="font-bold text-lg mt-1">${item.price.toFixed(2)}</div>
+                        <div className="font-bold text-lg mt-1">{formatPrice(item.price)}</div>
                       </div>
                       
                       <div className="flex items-center justify-between mt-3">
@@ -183,7 +184,7 @@ const CartDrawer = () => {
               <div className="p-4 bg-white border-t shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                 <div className="flex justify-between items-center mb-4">
                   <span className="text-gray-600 font-medium">Subtotal</span>
-                  <span className="text-2xl font-bold">${totalPrice}</span>
+                  <span className="text-2xl font-bold">{formatPrice(totalPrice)}</span>
                 </div>
                 <Link 
                    to="/cart"

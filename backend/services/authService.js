@@ -11,38 +11,40 @@ export const sendOtpService = async (rawEmail) => {
 
   const email = rawEmail.trim().toLowerCase();
 
+  // 1. Find or Create User
   let user = await User.findOne({ email });
-
-  if (user && user.otp && user.otpExpires && user.otpExpires > new Date()) {
-    console.log(`[AUTH] OTP for ${email}: (reused — still valid)`);
-    return { emailSent: false, message: 'OTP already sent — check your email or console.' };
-  }
-
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const otpExpires = new Date(Date.now() + 5 * 60 * 1000);
-
   if (!user) {
-    user = new User({ email, name: email.split('@')[0], isVerified: false });
+    console.log(`[AUTH] Creating new user for ${email}`);
+    user = await User.create({ 
+      email, 
+      name: email.split('@')[0] || 'Amazon Customer' 
+    });
   }
 
+  // 2. Generate and Save OTP
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
   user.otp = otp;
-  user.otpExpires = otpExpires;
-  await user.save({ validateBeforeSave: false });
-
+  user.otpExpires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+  
+  await user.save();
   console.log(`\n[AUTH] ✉️  OTP for ${email}: ${otp}\n`);
 
+  // 3. Send Email (non-blocking failure)
   let emailSent = false;
   try {
     emailSent = await sendEmail({
       to:      email,
       subject: 'Your Amazon Clone OTP',
-      text:    `Your one-time password is: ${otp}\n\nThis OTP expires in 5 minutes. Do not share it with anyone.`,
+      text:    `Your one-time password is: ${otp}\n\nThis OTP expires in 5 minutes.`,
     });
   } catch (err) {
-    console.warn('[AUTH] Email delivery failed — OTP only shown in server console');
+    console.error('[AUTH] SMTP Delivery Error:', err.message);
   }
 
-  return { emailSent, message: emailSent ? 'OTP sent to email' : 'OTP generated (check server console)' };
+  return { 
+    emailSent, 
+    message: emailSent ? 'OTP sent successfully' : 'OTP generated (check server console)' 
+  };
 };
 
 /* ── Verify OTP & issue tokens ───────────────────────────────────────────── */

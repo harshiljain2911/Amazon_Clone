@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, MapPin, CreditCard, ShoppingBag, ChevronRight, Loader } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { clearCartDB, clearCart } from '../slices/cartSlice';
+import { formatPrice } from '../utils/formatters';
 import { 
   createOrderAPI, 
   loadRazorpayScript, 
@@ -53,7 +54,15 @@ const Checkout = () => {
           price: item.price,
           qty: item.qty
         })),
-        shippingAddress: {...address, phone: address.mobile},
+        shippingAddress: {
+          fullName: address.fullName,
+          phone: address.mobile,
+          addressLine: address.addressLine,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+          country: 'India'
+        },
         paymentMethod: payment === 'cod' ? 'COD' : 'Razorpay' 
       };
 
@@ -63,7 +72,7 @@ const Checkout = () => {
       if (payment === 'cod') {
         dispatch(clearCartDB());
         dispatch(clearCart());
-        setStep(3);
+        navigate('/order-success', { state: { orderId: backendOrder.orderId, total: backendOrder.order.totalAmount } });
         toast.success('Order placed successfully!');
         setIsProcessing(false);
         return;
@@ -103,7 +112,7 @@ const Checkout = () => {
             
             dispatch(clearCartDB());
             dispatch(clearCart());
-            setStep(3);
+            navigate('/order-success', { state: { orderId: backendOrder.orderId, total: backendOrder.order.totalAmount } });
             toast.success('Payment verified! Order completed.');
           } catch (err) {
             toast.error('Payment verification failed.');
@@ -192,7 +201,7 @@ const Checkout = () => {
                     { name: 'pincode',   label: 'Pincode',       placeholder: '302001',          type: 'text' },
                     { name: 'city',      label: 'City',          placeholder: 'Jaipur' },
                     { name: 'state',     label: 'State',         placeholder: 'Rajasthan' },
-                    { name: 'address',   label: 'Address Line',  placeholder: '123, MG Road', full: true, textarea: true },
+                    { name: 'addressLine',   label: 'Address Line',  placeholder: '123, MG Road', full: true, textarea: true },
                   ].map((f) => (
                     <div key={f.name} className={f.full ? 'col-span-full' : ''}>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">{f.label}</label>
@@ -257,8 +266,7 @@ const Checkout = () => {
                   <button onClick={() => setStep(1)} className="flex-none px-5 py-3 rounded-xl border-2 border-gray-200 font-semibold hover:border-gray-300 text-sm transition-all" disabled={isProcessing}>← Back</button>
                   <button onClick={handlePlaceOrder} disabled={isProcessing}
                     className="flex-1 bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-black font-bold py-3.5 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                    {isProcessing ? <Loader size={18} className="animate-spin" /> : null}
-                    Place Order — ${total}
+                    Place Order — {formatPrice(total)}
                   </button>
                 </div>
               </motion.div>
@@ -276,8 +284,8 @@ const Checkout = () => {
                 <p className="text-gray-500 mb-8 text-sm">Your order will be delivered to <strong>{address.city}</strong> within 3–5 business days.</p>
                 <div className="text-left bg-gray-50 rounded-xl p-4 mb-8 text-sm space-y-1">
                   <div><span className="text-gray-500">Payment:</span> <span className="font-semibold capitalize">{payment === 'cod' ? 'Cash on Delivery' : payment.toUpperCase()}</span></div>
-                  <div><span className="text-gray-500">Address:</span> <span className="font-semibold">{address.address}, {address.city} — {address.pincode}</span></div>
-                  <div><span className="text-gray-500">Total:</span> <span className="font-bold text-lg">${total}</span></div>
+                  <div><span className="text-gray-500">Address:</span> <span className="font-semibold">{address.addressLine}, {address.city} — {address.pincode}</span></div>
+                  <div><span className="text-gray-500">Total:</span> <span className="font-bold text-lg">{formatPrice(total)}</span></div>
                 </div>
                 <button onClick={() => navigate('/')}
                   className="bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-500 hover:to-amber-600 text-black font-bold px-10 py-3.5 rounded-full shadow-md transition-all active:scale-95">
@@ -300,14 +308,14 @@ const Checkout = () => {
                         <p className="text-sm font-medium text-gray-900 line-clamp-1">{item.name}</p>
                         <p className="text-xs text-gray-500">Qty: {item.qty}</p>
                       </div>
-                      <span className="text-sm font-bold">${(item.price * item.qty).toFixed(2)}</span>
+                      <span className="text-sm font-bold">{formatPrice(item.price * item.qty)}</span>
                     </div>
                   ))}
                 </div>
                 <div className="border-t pt-3 space-y-1 text-sm">
-                  <div className="flex justify-between text-gray-600"><span>Items ({count})</span><span>${total}</span></div>
+                  <div className="flex justify-between text-gray-600"><span>Items ({count})</span><span>{formatPrice(total)}</span></div>
                   <div className="flex justify-between text-green-600 font-medium"><span>Delivery</span><span>FREE</span></div>
-                  <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2"><span>Total</span><span>${total}</span></div>
+                  <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2"><span>Total</span><span>{formatPrice(total)}</span></div>
                 </div>
               </div>
             </div>

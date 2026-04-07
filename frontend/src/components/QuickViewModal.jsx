@@ -7,6 +7,7 @@ import { addToCartDB } from '../slices/cartSlice';
 import { toggleWishlistDB } from '../slices/wishlistSlice';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { splitPrice } from '../utils/formatters';
 
 const QuickViewModal = () => {
   const dispatch = useDispatch();
@@ -121,10 +122,10 @@ const QuickViewModal = () => {
 
                 <div className="mb-6">
                   <span className="text-4xl font-black text-gray-900 block mb-2">
-                    <span className="text-2xl font-medium relative -top-2 mr-1">$</span>
-                    {Math.floor(product.price)}
+                    <span className="text-2xl font-medium relative -top-2 mr-1">₹</span>
+                    {splitPrice(product.price).int}
                     <span className="text-lg font-medium relative -top-2 ml-1">
-                      {((product.price % 1)*100).toFixed(0).padStart(2, '0')}
+                      {splitPrice(product.price).dec}
                     </span>
                   </span>
                   <p className="text-gray-600 leading-relaxed text-sm">

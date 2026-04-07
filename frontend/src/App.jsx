@@ -14,6 +14,7 @@ import Login from './pages/Login';
 import Wishlist from './pages/Wishlist';
 import Checkout from './pages/Checkout';
 import Orders from './pages/Orders';
+import OrderSuccess from './pages/OrderSuccess';
 import NetworkStatus from './components/NetworkStatus';
 import CartDrawer from './components/CartDrawer';
 import QuickViewModal from './components/QuickViewModal';
@@ -40,6 +41,7 @@ const AnimatedRoutes = () => {
         <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
         <Route path="/checkout" element={<PageWrapper><Checkout /></PageWrapper>} />
         <Route path="/orders" element={<PageWrapper><Orders /></PageWrapper>} />
+        <Route path="/order-success" element={<PageWrapper><OrderSuccess /></PageWrapper>} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminRoute />}>
